@@ -5,7 +5,7 @@ Thanks for your interest in improving wagtail-thumbnails. This is a small librar
 ## Setup
 
 ```bash
-git clone https://github.com/kmsky/wagtail-thumbnails
+git clone https://github.com/profilsoftware/wagtail-thumbnails
 cd wagtail-thumbnails
 uv sync --extra dev
 uv run pre-commit install

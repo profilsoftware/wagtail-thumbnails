@@ -13,8 +13,8 @@ if TYPE_CHECKING:
 def _build_url(file_holder: Any, request: Any) -> str:
     url = file_holder.file.url
     if request is not None:
-        return request.build_absolute_uri(url)
-    return url
+        return str(request.build_absolute_uri(url))
+    return str(url)
 
 
 def _scaled_size(image: AbstractImage, target_width: int) -> tuple[int, int]:
@@ -24,23 +24,40 @@ def _scaled_size(image: AbstractImage, target_width: int) -> tuple[int, int]:
     return target_width, height
 
 
-def _focal_point(image: AbstractImage) -> dict[str, int] | None:
+def _focal_point(image: AbstractImage) -> dict[str, int | None] | None:
+    """Return the image's focal point, or None when the point is unset.
+
+    ``width`` and ``height`` describe the focal *area* and may be ``None``
+    when only a centre point is set (vs. a 0x0 area, which would be
+    meaningless).
+    """
     if image.focal_point_x is None or image.focal_point_y is None:
         return None
     return {
         "x": int(image.focal_point_x),
         "y": int(image.focal_point_y),
-        "width": int(image.focal_point_width or 0),
-        "height": int(image.focal_point_height or 0),
+        "width": int(image.focal_point_width) if image.focal_point_width else None,
+        "height": int(image.focal_point_height) if image.focal_point_height else None,
     }
 
 
 def _resolve_alt_text(image: AbstractImage) -> str | None:
-    for attr in ("contextual_alt_text", "description", "default_alt_text"):
+    """Resolve alt text from the image's metadata.
+
+    Order: Wagtail's per-render ``contextual_alt_text`` (6.3+) → the image's
+    own ``description`` field (6.0+) → ``None``.
+
+    ``image.title`` and Wagtail's ``default_alt_text`` property (which itself
+    falls back to title) are intentionally *not* used: titles are typically
+    filenames or admin labels, and surfacing them as alt text is an a11y
+    anti-pattern. Editors who want explicit alt should fill in the image's
+    description field or set ``alt_text`` on the block.
+    """
+    for attr in ("contextual_alt_text", "description"):
         value = getattr(image, attr, None)
         if value:
             return str(value)
-    return image.title or None
+    return None
 
 
 def _rendition_spec(width: int, height: int, fmt: str, quality: int) -> str:
@@ -53,17 +70,23 @@ def _rendition_spec(width: int, height: int, fmt: str, quality: int) -> str:
 
 
 class FocalPointSerializer(serializers.Serializer):
-    x = serializers.IntegerField()
-    y = serializers.IntegerField()
-    width = serializers.IntegerField()
-    height = serializers.IntegerField()
+    x = serializers.IntegerField(help_text="Centre X coordinate of the focal area, in pixels.")
+    y = serializers.IntegerField(help_text="Centre Y coordinate of the focal area, in pixels.")
+    width = serializers.IntegerField(
+        allow_null=True,
+        help_text="Focal area width in pixels, or null when only a point is set.",
+    )
+    height = serializers.IntegerField(
+        allow_null=True,
+        help_text="Focal area height in pixels, or null when only a point is set.",
+    )
 
 
 class VariantSerializer(serializers.Serializer):
-    url = serializers.URLField()
-    width = serializers.IntegerField()
-    height = serializers.IntegerField()
-    format = serializers.CharField()
+    url = serializers.URLField(help_text="Rendition URL.")
+    width = serializers.IntegerField(help_text="Rendered width in pixels.")
+    height = serializers.IntegerField(help_text="Rendered height in pixels.")
+    format = serializers.CharField(help_text="Output format (e.g. 'webp', 'jpeg').")
 
 
 class ThumbnailSerializer(serializers.Serializer):
@@ -74,7 +97,10 @@ class ThumbnailSerializer(serializers.Serializer):
         {
           "src": "...",
           "alt_text": "..." | null,
-          "focal_point": {"x": int, "y": int, "width": int, "height": int} | null,
+          "focal_point": {
+            "x": int, "y": int,
+            "width": int | null, "height": int | null
+          } | null,
           "variants": {
             "<variant_name>": {"url": "...", "width": int, "height": int, "format": "webp"},
             ...
@@ -85,10 +111,19 @@ class ThumbnailSerializer(serializers.Serializer):
     setting (see ``wagtail_thumbnails.conf.DEFAULTS``).
     """
 
-    src = serializers.URLField()
-    alt_text = serializers.CharField(allow_null=True)
-    focal_point = FocalPointSerializer(allow_null=True)
-    variants = serializers.DictField(child=VariantSerializer())
+    src = serializers.URLField(help_text="URL of the original uploaded image.")
+    alt_text = serializers.CharField(
+        allow_null=True,
+        help_text="Resolved alt text. Null when no description is available.",
+    )
+    focal_point = FocalPointSerializer(
+        allow_null=True,
+        help_text="Editor-set focal point, or null if unset.",
+    )
+    variants = serializers.DictField(
+        child=VariantSerializer(),
+        help_text="Map of variant name → rendition metadata. Variant set is configurable.",
+    )
 
     def to_representation(self, instance: AbstractImage) -> dict[str, Any]:
         request = self.context.get("request") if self.context else None

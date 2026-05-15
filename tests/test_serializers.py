@@ -51,6 +51,20 @@ def test_focal_point_null_when_unset(make_image):
 
 
 @pytest.mark.django_db
+def test_focal_point_area_null_when_only_point_set(make_image):
+    image = make_image(width=800, height=600, focal=(400, 300, 0, 0))
+    payload = ThumbnailSerializer(context={}).to_representation(image)
+    assert payload["focal_point"] == {"x": 400, "y": 300, "width": None, "height": None}
+
+
+@pytest.mark.django_db
+def test_alt_text_does_not_fall_back_to_title(make_image):
+    image = make_image(width=400, height=300, title="DSC_1234.png")
+    payload = ThumbnailSerializer(context={}).to_representation(image)
+    assert payload["alt_text"] is None
+
+
+@pytest.mark.django_db
 def test_custom_variants_setting(make_image):
     with override_settings(
         WAGTAIL_THUMBNAILS={
