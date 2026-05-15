@@ -38,6 +38,7 @@ dependencies = [
     "Django>=4.2",
     "Wagtail>=5.2",
     "djangorestframework>=3.14",
+    "Pillow>=10",
 ]
 
 [project.optional-dependencies]
@@ -87,7 +88,7 @@ select = [
 ignore = ["E501"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/*" = ["S101", "SIM300", "B018"]
+"tests/*" = ["S101", "SIM300", "SIM117", "B018"]
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "tests.settings"
@@ -96,9 +97,16 @@ pythonpath = ["."]
 addopts = "-ra --strict-markers"
 filterwarnings = [
     "error",
-    "ignore::ResourceWarning",
-    "ignore::DeprecationWarning",
-    "ignore::PendingDeprecationWarning",
+    # Wagtail's rendition pipeline leaks SpooledTemporaryFile handles under
+    # 3.13's stricter GC. Not our bug — ignore narrowly.
+    "ignore::ResourceWarning:tempfile",
+    "ignore::pytest.PytestUnraisableExceptionWarning",
+    # Third-party deprecations we can't fix from here. Targeted, not blanket.
+    "ignore::DeprecationWarning:django.*",
+    "ignore::DeprecationWarning:wagtail.*",
+    "ignore::DeprecationWarning:rest_framework.*",
+    "ignore::PendingDeprecationWarning:django.*",
+    "ignore::PendingDeprecationWarning:wagtail.*",
 ]
 
 [tool.coverage.run]

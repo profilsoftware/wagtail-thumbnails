@@ -79,9 +79,12 @@ class ProductSerializer(serializers.ModelSerializer):
 }
 ```
 
-`focal_point` is `null` when the image has no focal point set.
+Notes on the shape:
 
-Variants never upscale: if the source is narrower than a variant's target width, the variant is generated at the source's native dimensions.
+- `focal_point` is `null` when no focal point is set. Its `width` / `height` are `null` when only a centre point was picked (no focal *area*).
+- `alt_text` is `null` when nothing is available. Wagtail titles are intentionally **not** used as alt text — they're typically filenames, which makes for a poor screen-reader experience.
+- The block emits `alt_text: ""` (empty string, *not* null) when the editor ticks the **Decorative** checkbox. Mark purely visual imagery this way so assistive tech can skip it.
+- Variants never upscale: if the source is narrower than a variant's target width, the variant is generated at the source's native dimensions.
 
 ## Configuration
 
@@ -107,6 +110,40 @@ WAGTAIL_THUMBNAILS = {
 | `MIN_IMAGE_HEIGHT` | `25` | Minimum source-image height. |
 
 Supported `format` values: `webp` (default), `jpeg`, `png`. `quality` is honoured for `webp` and `jpeg`.
+
+Misconfigurations (unknown keys, bad variant shapes, unsupported formats, out-of-range quality) raise `ImproperlyConfigured` at first access — not at request time.
+
+## Migrating from a plain `ImageBlock`
+
+`ThumbnailBlock` is a `StructBlock`, so the on-disk JSON shape inside a StreamField differs from a bare `ImageBlock`. If you're swapping an `ImageBlock` (whose value is just an image ID) for `ThumbnailBlock` (whose value is `{"image": <id>, "alt_text": "", "decorative": false}`), existing rows need a data migration:
+
+```python
+# yourapp/migrations/00XX_migrate_image_blocks_to_thumbnail.py
+from django.db import migrations
+
+OLD_TYPE = "image_block"
+NEW_TYPE = "thumbnail"
+
+
+def forwards(apps, schema_editor):
+    YourPage = apps.get_model("yourapp", "YourPage")
+    for page in YourPage.objects.all():
+        changed = False
+        for block in page.body.raw_data:
+            if block["type"] == OLD_TYPE:
+                block["type"] = NEW_TYPE
+                block["value"] = {"image": block["value"], "alt_text": "", "decorative": False}
+                changed = True
+        if changed:
+            page.save()
+
+
+class Migration(migrations.Migration):
+    dependencies = [("yourapp", "00XX_previous")]
+    operations = [migrations.RunPython(forwards, migrations.RunPython.noop)]
+```
+
+For revisions (`PageRevision`), apply the same transform to `revision.content`. For images that have to keep the legacy shape (e.g. external API consumers), keep `ImageBlock` for those entries and use `ThumbnailBlock` only for new ones.
 
 ## Compatibility
 

@@ -10,10 +10,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `ThumbnailBlock` — StructBlock with `image` + optional `alt_text` override
-- `ThumbnailSerializer` — emits `src`, `alt_text`, `focal_point`, and a configurable `variants` map
+- `ThumbnailBlock` — StructBlock with `image`, optional `alt_text` override, and a `decorative` checkbox that emits `alt_text: ""` for screen readers to skip
+- `ThumbnailSerializer` — emits `src`, `alt_text`, `focal_point` (with nullable `width`/`height` for point-only focals), and a configurable `variants` map; carries `help_text` so drf-spectacular generates useful OpenAPI schemas out of the box
 - `image_resolution_validator` — minimum dimensions check, settings-driven
-- Namespaced settings (`WAGTAIL_THUMBNAILS`) with sensible defaults
+- Namespaced settings (`WAGTAIL_THUMBNAILS`) with sensible defaults and eager validation: bad variant shapes, unsupported formats, out-of-range quality, and unknown keys raise `ImproperlyConfigured` at first access
+- Pillow added as an explicit runtime dependency
+- Migration guide in README for moving from a plain `ImageBlock` to `ThumbnailBlock`
+- `manage.py` and `CODE_OF_CONDUCT.md` for contributor experience
 - CI matrix across Python 3.10–3.13, Django 4.2/5.1/5.2, Wagtail 5.2/6.x/7.x
 
 [Unreleased]: https://github.com/kmsky/wagtail-thumbnails/compare/v0.1.0...HEAD
