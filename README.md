@@ -1,7 +1,7 @@
 # wagtail-thumbnails
 
 [![PyPI](https://img.shields.io/pypi/v/wagtail-thumbnails.svg)](https://pypi.org/project/wagtail-thumbnails/)
-[![CI](https://github.com/kmsky/wagtail-thumbnails/actions/workflows/test.yml/badge.svg)](https://github.com/kmsky/wagtail-thumbnails/actions/workflows/test.yml)
+[![CI](https://github.com/profilsoftware/wagtail-thumbnails/actions/workflows/test.yml/badge.svg)](https://github.com/profilsoftware/wagtail-thumbnails/actions/workflows/test.yml)
 [![Python](https://img.shields.io/pypi/pyversions/wagtail-thumbnails.svg)](https://pypi.org/project/wagtail-thumbnails/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -154,7 +154,7 @@ For revisions (`PageRevision`), apply the same transform to `revision.content`. 
 ## Development
 
 ```bash
-git clone https://github.com/kmsky/wagtail-thumbnails
+git clone https://github.com/profilsoftware/wagtail-thumbnails
 cd wagtail-thumbnails
 uv sync --extra dev
 uv run pytest

@@ -9,7 +9,7 @@ description = "A lightweight Wagtail StreamField block + DRF serializer that exp
 readme = "README.md"
 requires-python = ">=3.10"
 license = { file = "LICENSE" }
-authors = [{ name = "Kacper Matelski", email = "k.matelski1@gmail.com" }]
+authors = [{ name = "Profil Software", email = "contact@profil-software.com" }]
 keywords = ["wagtail", "django", "djangorestframework", "thumbnails", "webp", "headless", "streamfield"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -41,6 +41,12 @@ dependencies = [
     "Pillow>=10",
 ]
 
+[project.urls]
+Homepage = "https://github.com/profilsoftware/wagtail-thumbnails"
+Repository = "https://github.com/profilsoftware/wagtail-thumbnails"
+Issues = "https://github.com/profilsoftware/wagtail-thumbnails/issues"
+Changelog = "https://github.com/profilsoftware/wagtail-thumbnails/blob/main/CHANGELOG.md"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
@@ -50,16 +56,9 @@ dev = [
     "mypy>=1.11",
     "django-stubs>=5.0",
     "djangorestframework-stubs>=3.15",
-    "Pillow>=10",
     "build>=1.2",
     "twine>=5",
 ]
-
-[project.urls]
-Homepage = "https://github.com/kmsky/wagtail-thumbnails"
-Repository = "https://github.com/kmsky/wagtail-thumbnails"
-Issues = "https://github.com/kmsky/wagtail-thumbnails/issues"
-Changelog = "https://github.com/kmsky/wagtail-thumbnails/blob/main/CHANGELOG.md"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/wagtail_thumbnails"]

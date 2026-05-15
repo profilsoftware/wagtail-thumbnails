@@ -16,8 +16,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Namespaced settings (`WAGTAIL_THUMBNAILS`) with sensible defaults and eager validation: bad variant shapes, unsupported formats, out-of-range quality, and unknown keys raise `ImproperlyConfigured` at first access
 - Pillow added as an explicit runtime dependency
 - Migration guide in README for moving from a plain `ImageBlock` to `ThumbnailBlock`
-- `manage.py` and `CODE_OF_CONDUCT.md` for contributor experience
+- `manage.py` wired to the test settings for contributor experience
 - CI matrix across Python 3.10–3.13, Django 4.2/5.1/5.2, Wagtail 5.2/6.x/7.x
 
-[Unreleased]: https://github.com/kmsky/wagtail-thumbnails/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/kmsky/wagtail-thumbnails/releases/tag/v0.1.0
+[Unreleased]: https://github.com/profilsoftware/wagtail-thumbnails/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/profilsoftware/wagtail-thumbnails/releases/tag/v0.1.0
