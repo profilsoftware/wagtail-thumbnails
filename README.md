@@ -1,8 +1,8 @@
 # wagtail-thumbnails
 
-[![PyPI](https://img.shields.io/pypi/v/wagtail-thumbnails.svg)](https://pypi.org/project/wagtail-thumbnails/)
+[![PyPI](https://img.shields.io/pypi/v/wagtail-thumbnails)](https://pypi.org/project/wagtail-thumbnails/)
 [![CI](https://github.com/profilsoftware/wagtail-thumbnails/actions/workflows/test.yml/badge.svg)](https://github.com/profilsoftware/wagtail-thumbnails/actions/workflows/test.yml)
-[![Python](https://img.shields.io/pypi/pyversions/wagtail-thumbnails.svg)](https://pypi.org/project/wagtail-thumbnails/)
+[![Python](https://img.shields.io/pypi/pyversions/wagtail-thumbnails)](https://pypi.org/project/wagtail-thumbnails/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 A drop-in Wagtail StreamField block + DRF serializer that turns any uploaded image into a multi-variant WebP payload with dimensions and focal points — ready for headless frontends.
