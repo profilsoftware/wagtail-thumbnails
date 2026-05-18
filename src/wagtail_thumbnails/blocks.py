@@ -15,10 +15,10 @@ class ThumbnailBlock(StructBlock):
 
     Children:
 
-    - ``image`` — the picked Wagtail image (required).
-    - ``alt_text`` — optional. Overrides the image's default alt text for this
+    - ``image`` - the picked Wagtail image (required).
+    - ``alt_text`` - optional. Overrides the image's default alt text for this
       block instance.
-    - ``decorative`` — optional. When ``True``, the emitted ``alt_text`` is
+    - ``decorative`` - optional. When ``True``, the emitted ``alt_text`` is
       forced to ``""`` (empty string) so screen readers skip the image. Use
       this for purely visual / decorative imagery.
 

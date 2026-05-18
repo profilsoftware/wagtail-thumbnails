@@ -5,7 +5,7 @@
 [![Python](https://img.shields.io/pypi/pyversions/wagtail-thumbnails)](https://pypi.org/project/wagtail-thumbnails/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-A drop-in Wagtail StreamField block + DRF serializer that turns any uploaded image into a multi-variant WebP payload with dimensions and focal points — ready for headless frontends.
+A drop-in Wagtail StreamField block + DRF serializer that turns any uploaded image into a multi-variant WebP payload with dimensions and focal points - ready for headless frontends.
 
 ## What you get
 
@@ -14,8 +14,8 @@ A drop-in Wagtail StreamField block + DRF serializer that turns any uploaded ima
   - Source URL
   - Resolved alt text (block override → image `contextual_alt_text` → `description` → `title`)
   - Focal point (from Wagtail's built-in picker)
-  - A configurable map of responsive variants (defaults: `full_hd`, `large`, `medium`, `small`) — each with `url`, `width`, `height`, `format`
-- Settings-driven variants — ship sensible defaults, override per project
+  - A configurable map of responsive variants (defaults: `full_hd`, `large`, `medium`, `small`) - each with `url`, `width`, `height`, `format`
+- Settings-driven variants - ship sensible defaults, override per project
 
 You upload JPEG/PNG. Wagtail/Pillow generates and caches WebP renditions on first request. No user-side conversion required.
 
@@ -82,7 +82,7 @@ class ProductSerializer(serializers.ModelSerializer):
 Notes on the shape:
 
 - `focal_point` is `null` when no focal point is set. Its `width` / `height` are `null` when only a centre point was picked (no focal *area*).
-- `alt_text` is `null` when nothing is available. Wagtail titles are intentionally **not** used as alt text — they're typically filenames, which makes for a poor screen-reader experience.
+- `alt_text` is `null` when nothing is available. Wagtail titles are intentionally **not** used as alt text - they're typically filenames, which makes for a poor screen-reader experience.
 - The block emits `alt_text: ""` (empty string, *not* null) when the editor ticks the **Decorative** checkbox. Mark purely visual imagery this way so assistive tech can skip it.
 - Variants never upscale: if the source is narrower than a variant's target width, the variant is generated at the source's native dimensions.
 
@@ -111,7 +111,7 @@ WAGTAIL_THUMBNAILS = {
 
 Supported `format` values: `webp` (default), `jpeg`, `png`. `quality` is honoured for `webp` and `jpeg`.
 
-Misconfigurations (unknown keys, bad variant shapes, unsupported formats, out-of-range quality) raise `ImproperlyConfigured` at first access — not at request time.
+Misconfigurations (unknown keys, bad variant shapes, unsupported formats, out-of-range quality) raise `ImproperlyConfigured` at first access - not at request time.
 
 ## Migrating from a plain `ImageBlock`
 

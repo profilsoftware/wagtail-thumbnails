@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Tiny manage.py wired to the test settings — for contributor convenience.
+"""Tiny manage.py wired to the test settings - for contributor convenience.
 
 Use this to poke at a shell, run ad-hoc commands, or generate migrations
 against the test app. The package itself doesn't ship a Django project;

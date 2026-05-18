@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in improving wagtail-thumbnails. This is a small library — bug fixes, documentation tweaks, and small features are all welcome.
+Thanks for your interest in improving wagtail-thumbnails. This is a small library - bug fixes, documentation tweaks, and small features are all welcome.
 
 ## Setup
 
@@ -26,7 +26,7 @@ uv run mypy src/               # type-checking
 - Keep PRs focused. One change per PR.
 - Add tests for new behaviour. Aim for the existing coverage level.
 - Update `CHANGELOG.md` under `[Unreleased]`.
-- Don't bump the version in your PR — the maintainer handles releases.
+- Don't bump the version in your PR - the maintainer handles releases.
 
 ## Reporting issues
 

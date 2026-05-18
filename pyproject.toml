@@ -97,7 +97,7 @@ addopts = "-ra --strict-markers"
 filterwarnings = [
     "error",
     # Wagtail's rendition pipeline leaks SpooledTemporaryFile handles under
-    # 3.13's stricter GC. Not our bug — ignore narrowly.
+    # 3.13's stricter GC. Not our bug - ignore narrowly.
     "ignore::ResourceWarning:tempfile",
     "ignore::pytest.PytestUnraisableExceptionWarning",
     # Third-party deprecations we can't fix from here. Targeted, not blanket.

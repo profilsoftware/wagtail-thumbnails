@@ -10,9 +10,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- `ThumbnailBlock` — StructBlock with `image`, optional `alt_text` override, and a `decorative` checkbox that emits `alt_text: ""` for screen readers to skip
-- `ThumbnailSerializer` — emits `src`, `alt_text`, `focal_point` (with nullable `width`/`height` for point-only focals), and a configurable `variants` map; carries `help_text` so drf-spectacular generates useful OpenAPI schemas out of the box
-- `image_resolution_validator` — minimum dimensions check, settings-driven
+- `ThumbnailBlock` - StructBlock with `image`, optional `alt_text` override, and a `decorative` checkbox that emits `alt_text: ""` for screen readers to skip
+- `ThumbnailSerializer` - emits `src`, `alt_text`, `focal_point` (with nullable `width`/`height` for point-only focals), and a configurable `variants` map; carries `help_text` so drf-spectacular generates useful OpenAPI schemas out of the box
+- `image_resolution_validator` - minimum dimensions check, settings-driven
 - Namespaced settings (`WAGTAIL_THUMBNAILS`) with sensible defaults and eager validation: bad variant shapes, unsupported formats, out-of-range quality, and unknown keys raise `ImproperlyConfigured` at first access
 - Pillow added as an explicit runtime dependency
 - Migration guide in README for moving from a plain `ImageBlock` to `ThumbnailBlock`
