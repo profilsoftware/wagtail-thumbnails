@@ -155,11 +155,3 @@ uv run pytest
 uv run ruff check .
 uv run mypy src/
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports and PRs welcome.
-
-## License
-
-[MIT](LICENSE)
