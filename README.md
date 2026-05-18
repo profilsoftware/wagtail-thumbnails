@@ -36,7 +36,7 @@ INSTALLED_APPS = [
 
 ## Quickstart
 
-### As a StreamField block
+### StreamField block
 
 ```python
 from wagtail.fields import StreamField
@@ -49,7 +49,7 @@ class ArticlePage(Page):
     ])
 ```
 
-### As a nested serializer
+### Nested serializer
 
 ```python
 from rest_framework import serializers
@@ -144,12 +144,6 @@ class Migration(migrations.Migration):
 ```
 
 For revisions (`PageRevision`), apply the same transform to `revision.content`. For images that have to keep the legacy shape (e.g. external API consumers), keep `ImageBlock` for those entries and use `ThumbnailBlock` only for new ones.
-
-## Compatibility
-
-| Python | Django | Wagtail |
-| --- | --- | --- |
-| 3.10 – 3.13 | 4.2 LTS, 5.1, 5.2 | 5.2, 6.x, 7.x |
 
 ## Development
 
