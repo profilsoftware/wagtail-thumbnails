@@ -1,72 +1,87 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from django.utils.translation import gettext_lazy as _
-from wagtail.blocks import BooleanBlock, CharBlock, StructBlock
-from wagtail.images.blocks import ImageChooserBlock
+from wagtail.images.blocks import ImageBlock
 
 from wagtail_thumbnails.serializers import ThumbnailSerializer
 from wagtail_thumbnails.validators import image_resolution_validator
 
+if TYPE_CHECKING:
+    from collections.abc import Callable, Iterable
 
-class ThumbnailBlock(StructBlock):
-    """StructBlock pairing a chosen image with optional editor-level overrides.
+    from wagtail.images.models import AbstractImage
 
-    Children:
+    Validator = Callable[[AbstractImage | None], None]
 
-    - ``image`` - the picked Wagtail image (required).
-    - ``alt_text`` - optional. Overrides the image's default alt text for this
-      block instance.
-    - ``decorative`` - optional. When ``True``, the emitted ``alt_text`` is
-      forced to ``""`` (empty string) so screen readers skip the image. Use
-      this for purely visual / decorative imagery.
 
-    Emits the :class:`ThumbnailSerializer` payload via ``get_api_representation``.
+class ThumbnailBlock(ImageBlock):
+    """Wagtail :class:`~wagtail.images.blocks.ImageBlock` extended with:
+
+    - A configurable list of image validators (``validators=`` kwarg).
+    - A multi-variant API payload via :class:`ThumbnailSerializer`.
+
+    The block reuses Wagtail's stock ``image`` / ``alt_text`` / ``decorative``
+    fields — the cleaned value is an ``AbstractImage`` instance carrying
+    ``contextual_alt_text`` and ``decorative`` attributes.
+
+    Validators
+    ----------
+    Each validator is a callable ``f(image) -> None`` that raises
+    :class:`~django.core.exceptions.ValidationError` on failure. The default
+    is :data:`~wagtail_thumbnails.validators.image_resolution_validator`,
+    which itself no-ops unless thresholds are configured.
+
+    Usage::
+
+        # 1. Defaults — reads MIN_IMAGE_* from settings (or skips if unset)
+        ThumbnailBlock()
+
+        # 2. Per-field threshold override
+        ThumbnailBlock(validators=[ImageResolutionValidator(min_width=1920)])
+
+        # 3. Disable validation entirely
+        ThumbnailBlock(validators=[])
+
+        # 4. Add extra checks alongside the default
+        ThumbnailBlock(validators=[image_resolution_validator, my_aspect_ratio])
+
+        # 5. Subclass with a persistent override
+        class HeroImageBlock(ThumbnailBlock):
+            default_validators = (ImageResolutionValidator(min_width=1920, min_height=1080),)
     """
 
-    image = ImageChooserBlock(required=True, label=_("Image"))
-    alt_text = CharBlock(
-        required=False,
-        label=_("Alt text"),
-        help_text=_(
-            "Optional. Overrides the image's default alt text in this context. "
-            "Leave blank to fall back to the image's own description.",
-        ),
-    )
-    decorative = BooleanBlock(
-        required=False,
-        label=_("Decorative"),
-        help_text=_(
-            "Mark this image as purely decorative. The output alt text will be "
-            "an empty string so screen readers skip it.",
-        ),
-    )
+    default_validators: tuple[Validator, ...] = (image_resolution_validator,)
 
-    class Meta:
-        icon = "image"
-        label = _("Thumbnail")
-        form_classname = "struct-block thumbnail-block"
+    def __init__(
+        self,
+        required: bool = True,
+        *,
+        validators: Iterable[Validator] | None = None,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(required=required, **kwargs)
+        self.validators: tuple[Validator, ...] = (
+            tuple(validators) if validators is not None else self.default_validators
+        )
 
     def clean(self, value: Any) -> Any:
-        cleaned = super().clean(value)
-        image = cleaned.get("image") if cleaned else None
-        if image is not None:
-            image_resolution_validator(image)
-        return cleaned
+        value = super().clean(value)
+        if value is not None:
+            for validator in self.validators:
+                validator(value)
+        return value
 
     def get_api_representation(
         self,
         value: Any,
         context: dict[str, Any] | None = None,
     ) -> dict[str, Any] | None:
-        if not value or value.get("image") is None:
+        if value is None:
             return None
+        return ThumbnailSerializer(context=context or {}).to_representation(value)
 
-        payload = ThumbnailSerializer(context=context or {}).to_representation(value["image"])
-
-        if value.get("decorative"):
-            payload["alt_text"] = ""
-        elif value.get("alt_text"):
-            payload["alt_text"] = value["alt_text"]
-        return payload
+    class Meta:
+        icon = "image"
+        label = _("Thumbnail")

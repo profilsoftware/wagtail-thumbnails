@@ -9,17 +9,20 @@ A drop-in Wagtail StreamField block + DRF serializer that turns any uploaded ima
 
 ## What you get
 
-- A `ThumbnailBlock` (StructBlock) with `image` + optional per-instance `alt_text` override
+- A `ThumbnailBlock` - a thin extension of Wagtail's built-in `ImageBlock` that adds a pluggable validator pipeline and emits a `ThumbnailSerializer` payload
 - A `ThumbnailSerializer` that emits:
   - Source URL
-  - Resolved alt text (block override → image `contextual_alt_text` → `description` → `title`)
+  - Resolved alt text (block override → image `description` → `null`; titles are intentionally not used)
   - Focal point (from Wagtail's built-in picker)
   - A configurable map of responsive variants (defaults: `full_hd`, `large`, `medium`, `small`) - each with `url`, `width`, `height`, `format`
+- An `ImageResolutionValidator` you can configure globally (`WAGTAIL_THUMBNAILS` settings) or per-field
 - Settings-driven variants - ship sensible defaults, override per project
 
 You upload JPEG/PNG. Wagtail/Pillow generates and caches WebP renditions on first request. No user-side conversion required.
 
 ## Install
+
+Requires Django 4.2+, Wagtail **6.3+** (the block subclasses Wagtail's built-in `ImageBlock`, added in 6.3), and DRF 3.14+.
 
 ```bash
 pip install wagtail-thumbnails
@@ -48,6 +51,11 @@ class ArticlePage(Page):
         # ... your other blocks
     ])
 ```
+
+`ThumbnailBlock` is a subclass of Wagtail's [`ImageBlock`](https://docs.wagtail.org/en/stable/reference/streamfield/blocks.html#wagtail.images.blocks.ImageBlock), so editors get the same `image` / `alt_text` / `decorative` UI and behaviours - including the alt-text-required check (a value must have alt text *or* be marked decorative). The block adds:
+
+1. A configurable validator pipeline (see [Validation](#validation)).
+2. A multi-variant API payload via `ThumbnailSerializer.get_api_representation`.
 
 ### Nested serializer
 
@@ -98,27 +106,60 @@ WAGTAIL_THUMBNAILS = {
         "medium":  {"width": 450,  "format": "webp", "quality": 80},
         "small":   {"width": 125,  "format": "webp", "quality": 40},
     },
-    "MIN_IMAGE_WIDTH": 25,
-    "MIN_IMAGE_HEIGHT": 25,
+    "MIN_IMAGE_WIDTH": 1920,   # optional
+    "MIN_IMAGE_HEIGHT": 1080,  # optional
 }
 ```
 
 | Key | Default | Description |
 | --- | --- | --- |
 | `VARIANTS` | see above | Mapping of variant name → `{width, format, quality}`. Variant names become keys in the API output's `variants` dict. |
-| `MIN_IMAGE_WIDTH` | `25` | Minimum source-image width enforced by `image_resolution_validator` and `ThumbnailBlock.clean()`. |
-| `MIN_IMAGE_HEIGHT` | `25` | Minimum source-image height. |
+| `MIN_IMAGE_WIDTH` | `None` | Minimum source-image width enforced by `image_resolution_validator`. Omit (or set to `None`) to skip the width check. |
+| `MIN_IMAGE_HEIGHT` | `None` | Minimum source-image height. Omit (or set to `None`) to skip the height check. |
 
 Supported `format` values: `webp` (default), `jpeg`, `png`. `quality` is honoured for `webp` and `jpeg`.
 
 Misconfigurations (unknown keys, bad variant shapes, unsupported formats, out-of-range quality) raise `ImproperlyConfigured` at first access - not at request time.
 
-## Migrating from a plain `ImageBlock`
+## Validation
 
-`ThumbnailBlock` is a `StructBlock`, so the on-disk JSON shape inside a StreamField differs from a bare `ImageBlock`. If you're swapping an `ImageBlock` (whose value is just an image ID) for `ThumbnailBlock` (whose value is `{"image": <id>, "alt_text": "", "decorative": false}`), existing rows need a data migration:
+`ThumbnailBlock` accepts a `validators=` keyword argument: an iterable of callables of the shape `f(image) -> None` that raise `django.core.exceptions.ValidationError` on failure. The default is the module-level `image_resolution_validator`, which itself silently passes any image until you configure `MIN_IMAGE_WIDTH` / `MIN_IMAGE_HEIGHT` (globally or per-instance) - so adding the block to a project without any settings is safe and side-effect-free.
 
 ```python
-# yourapp/migrations/00XX_migrate_image_blocks_to_thumbnail.py
+from wagtail_thumbnails.blocks import ThumbnailBlock
+from wagtail_thumbnails.validators import ImageResolutionValidator, image_resolution_validator
+
+# 1. Defaults - reads MIN_IMAGE_* from WAGTAIL_THUMBNAILS, or skips if unset.
+ThumbnailBlock()
+
+# 2. Per-field threshold, ignoring whatever is in settings.
+ThumbnailBlock(validators=[ImageResolutionValidator(min_width=1920, min_height=1080)])
+
+# 3. Disable validation entirely on this field.
+ThumbnailBlock(validators=[])
+
+# 4. Add extra checks on top of the default.
+def must_be_landscape(image):
+    if image.width <= image.height:
+        raise ValidationError("Landscape orientation required.")
+
+ThumbnailBlock(validators=[image_resolution_validator, must_be_landscape])
+
+# 5. Project-wide override via subclass.
+class HeroImageBlock(ThumbnailBlock):
+    default_validators = (ImageResolutionValidator(min_width=1920, min_height=1080),)
+```
+
+`ImageResolutionValidator` resolves each axis independently: setting only `min_width` (per-instance *or* in settings) leaves the height check disabled, and vice versa. Per-instance values take precedence over the global setting; pass `None` to fall back to the setting.
+
+The validator pipeline runs from `ThumbnailBlock.clean()`, on top of Wagtail's built-in `ImageBlock` checks (a value must have alt text or be marked decorative). Validators run for non-empty values only - an empty optional block is not run through the pipeline.
+
+## Migrating from `ImageChooserBlock`
+
+`ThumbnailBlock` subclasses Wagtail's `ImageBlock`, whose on-disk JSON shape inside a StreamField is `{"image": <id>, "alt_text": "...", "decorative": false}` - different from a bare `ImageChooserBlock` (whose value is just an image ID). Existing rows need a one-shot data migration:
+
+```python
+# yourapp/migrations/00XX_migrate_image_chooser_to_thumbnail.py
 from django.db import migrations
 
 OLD_TYPE = "image_block"
@@ -143,7 +184,9 @@ class Migration(migrations.Migration):
     operations = [migrations.RunPython(forwards, migrations.RunPython.noop)]
 ```
 
-For revisions (`PageRevision`), apply the same transform to `revision.content`. For images that have to keep the legacy shape (e.g. external API consumers), keep `ImageBlock` for those entries and use `ThumbnailBlock` only for new ones.
+For revisions (`PageRevision`), apply the same transform to `revision.content`.
+
+If you're already on Wagtail's own `ImageBlock`, no data migration is needed - the StructBlock shape matches and `ThumbnailBlock` is a drop-in replacement.
 
 ## Development
 

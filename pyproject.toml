@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "wagtail-thumbnails"
-version = "0.1.0"
+version = "0.2.0"
 description = "A lightweight Wagtail StreamField block + DRF serializer that exposes responsive WebP thumbnails with dimensions and focal points."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,7 +19,6 @@ classifiers = [
     "Framework :: Django :: 5.1",
     "Framework :: Django :: 5.2",
     "Framework :: Wagtail",
-    "Framework :: Wagtail :: 5",
     "Framework :: Wagtail :: 6",
     "Framework :: Wagtail :: 7",
     "Intended Audience :: Developers",
@@ -36,7 +35,7 @@ classifiers = [
 ]
 dependencies = [
     "Django>=4.2",
-    "Wagtail>=5.2",
+    "Wagtail>=6.3",
     "djangorestframework>=3.14",
     "Pillow>=10",
 ]

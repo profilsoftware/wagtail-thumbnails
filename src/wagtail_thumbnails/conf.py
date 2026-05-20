@@ -18,8 +18,8 @@ DEFAULTS: dict[str, Any] = {
         "medium": {"width": 450, "format": "webp", "quality": 80},
         "small": {"width": 125, "format": "webp", "quality": 40},
     },
-    "MIN_IMAGE_WIDTH": 25,
-    "MIN_IMAGE_HEIGHT": 25,
+    "MIN_IMAGE_WIDTH": None,
+    "MIN_IMAGE_HEIGHT": None,
 }
 
 
@@ -38,9 +38,11 @@ def _validate(user_settings: dict[str, Any]) -> None:
     for key in ("MIN_IMAGE_WIDTH", "MIN_IMAGE_HEIGHT"):
         if key in user_settings:
             value = user_settings[key]
-            if not isinstance(value, int) or value < 0:
+            if value is None:
+                continue
+            if not isinstance(value, int) or isinstance(value, bool) or value < 0:
                 raise ImproperlyConfigured(
-                    f"{SETTINGS_KEY}[{key!r}] must be a non-negative int, got {value!r}.",
+                    f"{SETTINGS_KEY}[{key!r}] must be a non-negative int or None, got {value!r}.",
                 )
 
 

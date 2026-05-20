@@ -47,16 +47,23 @@ def _resolve_alt_text(image: AbstractImage) -> str | None:
     Order: Wagtail's per-render ``contextual_alt_text`` (6.3+) → the image's
     own ``description`` field (6.0+) → ``None``.
 
+    An empty-string ``contextual_alt_text`` is intentional — it means the
+    editor marked the image as decorative (or explicitly cleared the alt
+    field) and assistive tech should skip it. We surface that empty string
+    rather than falling through to ``description``.
+
     ``image.title`` and Wagtail's ``default_alt_text`` property (which itself
     falls back to title) are intentionally *not* used: titles are typically
     filenames or admin labels, and surfacing them as alt text is an a11y
     anti-pattern. Editors who want explicit alt should fill in the image's
     description field or set ``alt_text`` on the block.
     """
-    for attr in ("contextual_alt_text", "description"):
-        value = getattr(image, attr, None)
-        if value:
-            return str(value)
+    contextual = getattr(image, "contextual_alt_text", None)
+    if contextual is not None:
+        return str(contextual)
+    description = getattr(image, "description", None)
+    if description:
+        return str(description)
     return None
 
 

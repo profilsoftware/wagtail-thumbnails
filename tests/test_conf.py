@@ -8,9 +8,17 @@ from wagtail_thumbnails.conf import DEFAULTS, app_settings
 
 
 def test_defaults_when_unset():
+    assert app_settings.MIN_IMAGE_WIDTH is None
+    assert app_settings.MIN_IMAGE_HEIGHT is None
     assert app_settings.MIN_IMAGE_WIDTH == DEFAULTS["MIN_IMAGE_WIDTH"]
     assert app_settings.MIN_IMAGE_HEIGHT == DEFAULTS["MIN_IMAGE_HEIGHT"]
     assert set(app_settings.VARIANTS) == {"full_hd", "large", "medium", "small"}
+
+
+def test_min_dimension_accepts_explicit_none():
+    with override_settings(WAGTAIL_THUMBNAILS={"MIN_IMAGE_WIDTH": None, "MIN_IMAGE_HEIGHT": None}):
+        assert app_settings.MIN_IMAGE_WIDTH is None
+        assert app_settings.MIN_IMAGE_HEIGHT is None
 
 
 def test_user_override_replaces_variants():
